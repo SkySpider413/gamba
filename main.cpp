@@ -1,10 +1,13 @@
 #include <bits/stdc++.h>
+#include <windows.h>
 using namespace std;
 string random_string;
 #define ff first
 #define ss second
 #define MPTAX 0.84825
 #define MIL 1000000.0
+HANDLE col;
+
 const double CLEANSE = -100000;
 const int BASE_FS = 0;
 const double HARDCAP_CHANCE = 0.9;
@@ -85,36 +88,39 @@ unordered_map<int, Material> mat_info;
 
 void zbicie_kijem(double v) // cout v with k/M/b/T
 {
+    if (v > 0.0)
+        SetConsoleTextAttribute(col, 10);
+    else
+        SetConsoleTextAttribute(col, 4);
+    if (v > 0.0)
+        cout << "+";
     if (abs(v) < 1000) {
         cout << setprecision(3) << v;
+        SetConsoleTextAttribute(col, 15);
         return;
     }
     v /= 1000;
     if (abs(v) < 1000) {
         cout << setprecision(3) << v << "k";
+        SetConsoleTextAttribute(col, 15);
         return;
     }
     v /= 1000;
     if (abs(v) < 1000) {
         cout << setprecision(3) << v << "M";
+        SetConsoleTextAttribute(col, 15);
         return;
     }
     v /= 1000;
     if (abs(v) < 1000) {
         cout << setprecision(3) << v << "b";
+        SetConsoleTextAttribute(col, 15);
         return;
     }
     v /= 1000;
-    /*
-    if (v >= 0)
-        cout << "\033[32m";
-    else
-        cout << "\033[31m";
-    /**/
-    if (v >= 0)
-        cout << "+";
 
     cout << setprecision(3) << v << "T";
+    SetConsoleTextAttribute(col, 15);
     // cout << "\033[0m";
     return;
 }
@@ -150,6 +156,7 @@ void R14();
 void R20_init();
 void fs_update();
 void summary();
+void acc_profits(string s, int b, int e);
 
 // TODO: \
 include Reblath 16->20 in fs price\
@@ -158,6 +165,7 @@ aka "ask for sicil" -> info like summary but showing just the sicil
 
 int main()
 {
+    col = GetStdHandle(STD_OUTPUT_HANDLE);
     // initialize items an stuff
     init();
 
@@ -178,7 +186,44 @@ int main()
 
     summary();
 
+    string s;
+    int q_b;
+    int q_e;
+    while (true) {
+        cin >> s;
+        if (acc_info.count(u_hash(s))) {
+            cout << "range?\n";
+            cin >> q_b >> q_e;
+            acc_profits(s, min(q_b, q_e), max(q_b, q_e));
+        } else {
+            cout << "name not found\n";
+            unordered_map<int, Accessory>::iterator q_it1;
+            pair<int, Accessory> q_ppp;
+            for (q_it1 = acc_info.begin(); q_it1 != acc_info.end(); ++q_it1) {
+                q_ppp = *q_it1;
+                cout << q_ppp.second.acc_name << ", ";
+            }
+            cout << "\n";
+        }
+    }
+
     return 0;
+}
+// q.second.ench_chance(i, j) * q.second.mp_price[j + 1] * MPTAX + (1 - q.second.ench_chance(i, j)) * fs_info[i + 1].value - q.second.mp_price[0] - q.second.mp_price[j]
+void acc_profits(string s, int b, int e)
+{
+    Accessory q = acc_info[u_hash(s)];
+    double q_g;
+    for (int i = b; i <= e; ++i) {
+        cout << " fs = " << i << " profits:";
+        for (int j = 0; j < 5; ++j) {
+            q_g = q.ench_chance(i, j) * q.mp_price[j + 1] * MPTAX + (1 - q.ench_chance(i, j)) * fs_info[i + 1].value - q.mp_price[0] - q.mp_price[j];
+            zbicie_kijem(q_g + fs_info[i].get_profit);
+            cout << " ";
+        }
+        cout << "\n";
+    }
+    return;
 }
 
 void fs_init() // init fs prices with bs/dragon scale
@@ -343,6 +388,17 @@ void init() // initialize item data
         acc_info[q_acc.item_id] = q_acc;
     }
 
+    // Orkinrad
+    {
+        Accessory q_acc;
+        q_acc.acc_name = "Orkinrad";
+        q_acc.item_id = u_hash(q_acc.acc_name);
+        double q_pr[] = { 18.8, 42.1, 178, 540, 2900, 22000 };
+        for (int i = 0; i < 6; ++i)
+            q_acc.mp_price[i] = q_pr[i] * MIL;
+        acc_info[q_acc.item_id] = q_acc;
+    }
+
     // Tung belet
     {
         Accessory q_acc;
@@ -360,7 +416,7 @@ void init() // initialize item data
         Accessory q_acc;
         q_acc.acc_name = "Basi";
         q_acc.item_id = u_hash(q_acc.acc_name);
-        double q_pr[] = { 37, 65.5, 310, 900, 4020, 36300 };
+        double q_pr[] = { 34.5, 67.5, 286, 830, 3880, 36300 };
         for (int i = 0; i < 6; ++i)
             q_acc.mp_price[i] = q_pr[i] * MIL;
         acc_info[q_acc.item_id] = q_acc;
@@ -374,7 +430,7 @@ void init() // initialize item data
         Accessory q_acc;
         q_acc.acc_name = "Serap";
         q_acc.item_id = u_hash(q_acc.acc_name);
-        double q_pr[] = { 9.4, 47.9, 74, 237, 545, 2900 };
+        double q_pr[] = { 9.1, 43, 73, 212, 545, 2900 };
         for (int i = 0; i < 6; ++i)
             q_acc.mp_price[i] = q_pr[i] * MIL;
         acc_info[q_acc.item_id] = q_acc;
@@ -385,7 +441,7 @@ void init() // initialize item data
         Accessory q_acc;
         q_acc.acc_name = "Sicill";
         q_acc.item_id = u_hash(q_acc.acc_name);
-        double q_pr[] = { 10.2, 29.7, 137, 455, 2150, 19300 };
+        double q_pr[] = { 10.4, 27.2, 138, 408, 2150, 19300 };
         for (int i = 0; i < 6; ++i)
             q_acc.mp_price[i] = q_pr[i] * MIL;
         acc_info[q_acc.item_id] = q_acc;
@@ -506,6 +562,113 @@ void summary() // summary on how to get certain fs /.how to earn on them
 }
 
 // todo line todo line todo line todo line todo line todo line todo line todo line todo line todo line todo line todo line todo line todo line todo line
+
+double mc_RX(int start_fs, int from_lvl)
+{
+    int q_fs;
+    int rounds = 100000;
+    if (from_lvl == 15) {
+        double q_r;
+        double tries = 0;
+
+        for (int i = 0; i < rounds; ++i) {
+            q_fs = start_fs;
+            q_r = (double)rand() / (double)RAND_MAX;
+            ++tries;
+            while (q_r > min(0.9, .1176 + .01176 * min(50, q_fs) + 0.01176 / 5.0 * max(q_fs - 50, 0))) {
+                q_r = (double)rand() / (double)RAND_MAX;
+                ++tries;
+                q_fs += 2;
+            }
+        }
+        return tries / (double)rounds;
+    } else if (from_lvl == 16) {
+        double q_r;
+        double tries = 0;
+        for (int i = 0; i < rounds; ++i) {
+            q_fs = start_fs;
+            q_r = (double)rand() / (double)RAND_MAX;
+            ++tries;
+            while (q_r > min(0.9, .0769 + .00769 * min(82, q_fs) + 0.00769 / 5.0 * max(q_fs - 82, 0))) {
+                q_r = (double)rand() / (double)RAND_MAX;
+                ++tries;
+                q_fs += 3;
+            }
+        }
+        return tries / (double)rounds;
+    } else if (from_lvl == 17) {
+        double q_r;
+        double tries = 0;
+        for (int i = 0; i < rounds; ++i) {
+            q_fs = start_fs;
+            q_r = (double)rand() / (double)RAND_MAX;
+            ++tries;
+            while (q_r > min(0.9, .0625 + .00625 * min(102, q_fs) + 0.00625 / 5.0 * max(q_fs - 102, 0))) {
+                q_r = (double)rand() / (double)RAND_MAX;
+                ++tries;
+                q_fs += 4;
+            }
+        }
+        return tries / (double)rounds;
+    } else if (from_lvl == 18) {
+        double q_r;
+        double tries = 0;
+        for (int i = 0; i < rounds; ++i) {
+            q_fs = start_fs;
+            q_r = (double)rand() / (double)RAND_MAX;
+            ++tries;
+            while (q_r > min(0.9, .02 + .002 * min(340, q_fs) + 0.002 / 5.0 * max(q_fs - 340, 0))) {
+                q_r = (double)rand() / (double)RAND_MAX;
+                ++tries;
+                q_fs += 5;
+            }
+        }
+        return tries / (double)rounds;
+    } else if (from_lvl == 19) {
+        double q_r;
+        double tries = 0;
+        for (int i = 0; i < rounds; ++i) {
+            q_fs = start_fs;
+            q_r = (double)rand() / (double)RAND_MAX;
+            ++tries;
+            while (q_r > min(0.003, .1176 + .0003 * min(2324, q_fs) + 0.0003 / 5.0 * max(q_fs - 2324, 0))) {
+                q_r = (double)rand() / (double)RAND_MAX;
+                ++tries;
+                q_fs += 6;
+            }
+        }
+        return tries / (double)rounds;
+    } else {
+        return 0;
+    }
+}
+
+/*
+pair<int, Accessory> q;
+        q = *itr;
+
+        double BD0 = q.second.mp_price[0];
+        double BD4 = q.second.mp_price[4];
+        double chance = HARDCAP_CHANCE; // change this if CALC_LIMIT < 6990
+        double BD5 = q.second.mp_price[5] * chance * MPTAX;
+        int rounds = 1000000;
+        double tries = 0;
+        double q_r;
+        for (int i = 0; i < rounds; ++i) {
+            q_r = (double)rand() / (double)RAND_MAX;
+            ++tries;
+            while (q_r > chance) { // and this
+                q_r = (double)rand() / (double)RAND_MAX;
+                ++tries;
+            }
+        }
+        double q_av = BD5 - (BD0 + BD4) * double(tries) / rounds;
+        if (fs_info[CALCULATION_LIMIT].value < q_av) {
+            fs_info[CALCULATION_LIMIT].value = q_av;
+            fs_info[CALCULATION_LIMIT].val_comments = "mc6900 with " + q.second.acc_name;
+        }
+
+/**/
 
 void R20_init() // uses current data to init pri+ rocaba prices, uses fs value and fs get profit
 {
