@@ -151,6 +151,11 @@ void R20_init();
 void fs_update();
 void summary();
 
+// TODO: \
+include Reblath 16->20 in fs price\
+query about specific item \
+aka "ask for sicil" -> info like summary but showing just the sicil
+
 int main()
 {
     // initialize items an stuff
@@ -349,13 +354,13 @@ void init() // initialize item data
         acc_info[q_acc.item_id] = q_acc;
     }
 
-    /*
+    /**/
     // Basi
     {
         Accessory q_acc;
         q_acc.acc_name = "Basi";
         q_acc.item_id = u_hash(q_acc.acc_name);
-        double q_pr[] = { 38.9, 60, 315, 900, 4020, 36300 };
+        double q_pr[] = { 37, 65.5, 310, 900, 4020, 36300 };
         for (int i = 0; i < 6; ++i)
             q_acc.mp_price[i] = q_pr[i] * MIL;
         acc_info[q_acc.item_id] = q_acc;
