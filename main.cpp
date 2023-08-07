@@ -12,7 +12,7 @@ const double CLEANSE = -100000;
 const int BASE_FS = 0;
 const double HARDCAP_CHANCE = 0.9;
 const int CALCULATION_LIMIT = 6990; // this has to be 6990 or over for mc6990 to work
-const int SUMMARY_LIMIT = 200; // this is just to not show a bunch of useless info
+const int SUMMARY_LIMIT = 120; // this is just to not show a bunch of useless info
 
 const int DEVOUR_ARMOR[21] = { 0, 0, 0, 0, 0, 0, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 25, 30, 40, 50, 70 };
 const int DEVOUR_WEAPON[21] = { 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 8, 10, 12, 14, 16, 28, 33, 43, 53, 75 };
@@ -32,6 +32,8 @@ const int u_R14_soft = 340;
 
 // all the needed data calculated once
 double u_R_costs[5];
+int u_R_fs[5];
+string u_R_comments[5];
 double u_R_value[5];
 // end of 1 time data
 
@@ -566,7 +568,7 @@ void summary() // summary on how to get certain fs /.how to earn on them
 double mc_RX(int start_fs, int from_lvl)
 {
     int q_fs;
-    int rounds = 100000;
+    int rounds = 250;
     if (from_lvl == 15) {
         double q_r;
         double tries = 0;
@@ -643,44 +645,41 @@ double mc_RX(int start_fs, int from_lvl)
     }
 }
 
-/*
-pair<int, Accessory> q;
-        q = *itr;
-
-        double BD0 = q.second.mp_price[0];
-        double BD4 = q.second.mp_price[4];
-        double chance = HARDCAP_CHANCE; // change this if CALC_LIMIT < 6990
-        double BD5 = q.second.mp_price[5] * chance * MPTAX;
-        int rounds = 1000000;
-        double tries = 0;
-        double q_r;
-        for (int i = 0; i < rounds; ++i) {
-            q_r = (double)rand() / (double)RAND_MAX;
-            ++tries;
-            while (q_r > chance) { // and this
-                q_r = (double)rand() / (double)RAND_MAX;
-                ++tries;
-            }
-        }
-        double q_av = BD5 - (BD0 + BD4) * double(tries) / rounds;
-        if (fs_info[CALCULATION_LIMIT].value < q_av) {
-            fs_info[CALCULATION_LIMIT].value = q_av;
-            fs_info[CALCULATION_LIMIT].val_comments = "mc6900 with " + q.second.acc_name;
-        }
-
-/**/
-
 void R20_init() // uses current data to init pri+ rocaba prices, uses fs value and fs get profit
 {
     u_R_value[5] = fs_info[70].value;
     cout << "R20 val = ";
     zbicie_kijem(u_R_value[5]);
     cout << "\n";
+    for (int i = 0; i < 5; ++i)
+        u_R_costs[i] = -numeric_limits<double>::infinity();
+    double q_p;
 
-    for (int i = 1; i < 5; ++i) {
-        for (int i = 0; i < CALCULATION_LIMIT; ++i) {
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 0; j < CALCULATION_LIMIT; ++j) {
+            if (i == 0 || i == 1) {
+                q_p = fs_info[j].get_profit - u_BSA * 99.8953 - mc_RX(j, 15 + i) * (u_CBSA + u_R) + u_R;
+                if (i == 1)
+                    q_p += u_R_costs[0];
+                if (q_p > u_R_costs[i]) {
+                    u_R_costs[i] = q_p;
+                    u_R_comments[i] = to_string(j) + ">";
+                }
+            } else if (i == 2 || i == 3 || i == 4) {
+                q_p = fs_info[j].get_profit + mc_RX(j, 15 + i) * (u_R_costs[i - 1] + u_R_costs[i - 2] - u_R - u_CBSA) + u_R;
+                if (q_p > u_R_costs[i]) {
+                    u_R_costs[i] = q_p;
+                    u_R_comments[i] = to_string(j) + ">";
+                }
+            }
         }
     }
+    for (int i = 0; i < 5; ++i) {
+        cout << "R" << i + 16 << "-" << u_R_comments[i] << " for ";
+        zbicie_kijem(u_R_costs[i]);
+        cout << "\n";
+    }
+    return;
 }
 
 void fs_update()
