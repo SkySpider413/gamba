@@ -88,6 +88,13 @@ unordered_map<int, FStack> fs_info;
 unordered_map<int, Accessory> acc_info;
 unordered_map<int, Material> mat_info;
 
+void print_sizes()
+{
+    cout << "fs info size : " << sizeof(fs_info) << "\n";
+    cout << "acc info size : " << sizeof(acc_info) << "\n";
+    return;
+}
+
 void zbicie_kijem(double v) // cout v with k/M/b/T
 {
     if (v > 0.0)
@@ -188,13 +195,17 @@ int main()
 
     summary();
 
-    for (int i = 0; i < 3; ++i) // to cos nie dziala
+    /**/
+    for (int i = 0; i < 5; ++i) // to cos nie dziala
     {
+        // update fs prices
         fs_update();
+        // update 15+ costs
         R20_init();
     }
     cout << " after 2137 raounds-------------------------------------------------------------------------------------------------------------------\n";
     summary();
+    /**/
 
     string s;
     int q_b;
@@ -298,7 +309,7 @@ void init() // initialize item data
         Accessory q_acc;
         q_acc.acc_name = "Crescent";
         q_acc.item_id = u_hash(q_acc.acc_name);
-        double q_pr[] = { 63, 148, 477, 1430, 5050, 46300 };
+        double q_pr[] = { 53.5, 132, 466, 1380, 4700, 43900 };
         for (int i = 0; i < 6; ++i)
             q_acc.mp_price[i] = q_pr[i] * MIL;
         acc_info[q_acc.item_id] = q_acc;
@@ -392,7 +403,7 @@ void init() // initialize item data
         Accessory q_acc;
         q_acc.acc_name = "Valtarra";
         q_acc.item_id = u_hash(q_acc.acc_name);
-        double q_pr[] = { 49.5, 99, 396, 1250, 5200, 48800 };
+        double q_pr[] = { 51, 93.5, 376, 1050, 4750, 45000 };
         for (int i = 0; i < 6; ++i)
             q_acc.mp_price[i] = q_pr[i] * MIL;
         acc_info[q_acc.item_id] = q_acc;
@@ -426,7 +437,7 @@ void init() // initialize item data
         Accessory q_acc;
         q_acc.acc_name = "Basi";
         q_acc.item_id = u_hash(q_acc.acc_name);
-        double q_pr[] = { 34.5, 67.5, 286, 830, 3880, 36300 };
+        double q_pr[] = { 35.5, 67.5, 293, 930, 4080, 35800 };
         for (int i = 0; i < 6; ++i)
             q_acc.mp_price[i] = q_pr[i] * MIL;
         acc_info[q_acc.item_id] = q_acc;
@@ -440,7 +451,7 @@ void init() // initialize item data
         Accessory q_acc;
         q_acc.acc_name = "Serap";
         q_acc.item_id = u_hash(q_acc.acc_name);
-        double q_pr[] = { 9.1, 43, 73, 212, 545, 2900 };
+        double q_pr[] = { 8.9, 36.6, 70, 228, 545, 2900 };
         for (int i = 0; i < 6; ++i)
             q_acc.mp_price[i] = q_pr[i] * MIL;
         acc_info[q_acc.item_id] = q_acc;
@@ -451,7 +462,7 @@ void init() // initialize item data
         Accessory q_acc;
         q_acc.acc_name = "Sicill";
         q_acc.item_id = u_hash(q_acc.acc_name);
-        double q_pr[] = { 10, 27.2, 141, 408, 2370, 19300 };
+        double q_pr[] = { 9.7, 29.2, 119, 412, 2090, 18500 };
         for (int i = 0; i < 6; ++i)
             q_acc.mp_price[i] = q_pr[i] * MIL;
         acc_info[q_acc.item_id] = q_acc;
@@ -462,7 +473,7 @@ void init() // initialize item data
         Accessory q_acc;
         q_acc.acc_name = "River";
         q_acc.item_id = u_hash(q_acc.acc_name);
-        double q_pr[] = { 38.9, 143, 465, 1390, 6100, 50000 };
+        double q_pr[] = { 48.8, 160, 437, 1390, 6100, 45900 };
         for (int i = 0; i < 6; ++i)
             q_acc.mp_price[i] = q_pr[i] * MIL;
         acc_info[q_acc.item_id] = q_acc;
@@ -660,25 +671,29 @@ double mc_RX(int start_fs, int from_lvl)
 void R20_init() // uses current data to init pri+ rocaba prices, uses fs value and fs get profit
 {
     u_R_value[5] = fs_info[70].value;
-    cout << "R20 val = ";
+    cout << "ini R20 val = ";
     zbicie_kijem(u_R_value[5]);
     cout << "\n";
     for (int i = 0; i < 5; ++i)
         u_R_costs[i] = -numeric_limits<double>::infinity();
     double q_p;
 
-    for (int i = 0; i < 5; ++i) {
-        for (int j = 0; j < CALCULATION_LIMIT; ++j) {
-            if (i == 0 || i == 1) {
-                q_p = fs_info[j].get_profit - u_BSA * 99.8953 - mc_RX(j, 15 + i) * (u_CBSA + u_R) + u_R;
-                if (i == 1)
-                    q_p += u_R_costs[0];
+    for (int j = 0; j < CALCULATION_LIMIT; ++j) {
+        for (int i = 0; i < 5; ++i) {
+            if (i == 0) {
+                q_p = fs_info[j].get_profit - u_BSA * 99.8953 - mc_RX(j, 15) * (u_CBSA + u_R) + u_R;
+                if (q_p > u_R_costs[i]) {
+                    u_R_costs[i] = q_p;
+                    u_R_comments[i] = to_string(j) + ">";
+                }
+            } else if (i == 1) {
+                q_p = fs_info[j].get_profit + u_R_costs[0] - mc_RX(j, 16) * (u_CBSA + u_R) + u_R;
                 if (q_p > u_R_costs[i]) {
                     u_R_costs[i] = q_p;
                     u_R_comments[i] = to_string(j) + ">";
                 }
             } else if (i == 2 || i == 3 || i == 4) {
-                q_p = fs_info[j].get_profit + mc_RX(j, 15 + i) * (u_R_costs[i - 1] + u_R_costs[i - 2] - u_R - u_CBSA) + u_R;
+                q_p = fs_info[j].get_profit + mc_RX(j, 15 + i) * (u_R_costs[i - 1] - u_R_costs[i - 2] - u_R - u_CBSA) + u_R;
                 if (q_p > u_R_costs[i]) {
                     u_R_costs[i] = q_p;
                     u_R_comments[i] = to_string(j) + ">";
@@ -686,37 +701,40 @@ void R20_init() // uses current data to init pri+ rocaba prices, uses fs value a
             }
         }
     }
-    for (int i = 0; i < 5; ++i) {
-        u_R_value[i] = 0;
-        u_R_comments[i] = "no use\n";
+
+    if (fs_info[70].get_profit < u_R_costs[4]) {
+        fs_info[70].get_profit = u_R_costs[4];
+        fs_info[70].get_comments = "from penR";
     }
-    u_R_value[5] = fs_info[70].value;
 
-    double q_pq[4];
+    /*
+        double q_pq[4];
 
-    for (int i = CALCULATION_LIMIT; i >= 0; --i) {
-        q_pq[0] = min(0.9, .0769 + .00769 * min(82, i) + 0.00769 / 5.0 * max(i - 82, 0));
-        q_pq[1] = min(0.9, .0625 + .00625 * min(102, i) + 0.00625 / 5.0 * max(i - 102, 0));
-        q_pq[2] = min(0.9, .02 + .002 * min(340, i) + 0.002 / 5.0 * max(i - 340, 0));
-        q_pq[3] = min(0.9, 0.003 + .0003 * min(2324, i) + 0.0003 / 5.0 * max(i - 2324, 0));
 
-        for (int j = 3; j >= 0; --j) {
-            if (j == 0) {
-                if ((1 - q_pq[j]) * fs_info[i + 3].value - fs_info[i].value - u_CBSA - u_R > u_R_value[j]) {
-                    u_R_value[j] = (1 - q_pq[j]) * fs_info[i + 3].value - fs_info[i].value - u_CBSA - u_R;
-                    u_R_comments[j] = "up at " + to_string(i);
-                }
-            } else if (j == 1 || j == 2 || j == 3) {
-                if (q_pq[j] * u_R_value[j + 1] + (1 - q_pq[j]) * (u_R_value[j - 1] + fs_info[i + 3].value - u_R) - fs_info[i].value - u_CBSA > u_R_value[j]) {
-                    u_R_value[j] = q_pq[j] * u_R_value[j + 1] + (1 - q_pq[j]) * (u_R_value[j - 1] + fs_info[i + 3].value - u_R) - fs_info[i].value - u_CBSA;
-                    u_R_comments[j] = "up at " + to_string(i);
+        for (int i = CALCULATION_LIMIT; i >= 0; --i) {
+            q_pq[0] = min(0.9, .0769 + .00769 * min(82, i) + 0.00769 / 5.0 * max(i - 82, 0));
+            q_pq[1] = min(0.9, .0625 + .00625 * min(102, i) + 0.00625 / 5.0 * max(i - 102, 0));
+            q_pq[2] = min(0.9, .02 + .002 * min(340, i) + 0.002 / 5.0 * max(i - 340, 0));
+            q_pq[3] = min(0.9, 0.003 + .0003 * min(2324, i) + 0.0003 / 5.0 * max(i - 2324, 0));
+
+            for (int j = 3; j >= 0; --j) {
+                if (j == 0) {
+                    if ((1 - q_pq[j]) * fs_info[i + 3].value - fs_info[i].value - u_CBSA - u_R > u_R_value[j]) {
+                        u_R_value[j] = (1 - q_pq[j]) * fs_info[i + 3].value - fs_info[i].value - u_CBSA - u_R;
+                        u_R_comments[j] = "up at " + to_string(i);
+                    }
+                } else if (j == 1 || j == 2 || j == 3) {
+                    if (q_pq[j] * u_R_value[j + 1] + (1 - q_pq[j]) * (u_R_value[j - 1] + fs_info[i + 3].value - u_R) - fs_info[i].value - u_CBSA > u_R_value[j]) {
+                        u_R_value[j] = q_pq[j] * u_R_value[j + 1] + (1 - q_pq[j]) * (u_R_value[j - 1] + fs_info[i + 3].value - u_R) - fs_info[i].value - u_CBSA;
+                        u_R_comments[j] = "up at " + to_string(i);
+                    }
                 }
             }
         }
-    }
+        /**/
 
     for (int i = 0; i < 5; ++i) {
-        cout << "R" << i + 16 << "costs" << u_R_comments[i] << " for ";
+        cout << "R" << i + 16 << " costs " << u_R_comments[i] << " for ";
         zbicie_kijem(u_R_costs[i]);
         cout << "\n";
     }
@@ -725,6 +743,7 @@ void R20_init() // uses current data to init pri+ rocaba prices, uses fs value a
 
 void fs_update() // te koszty R15+ cos niezbyt dzialaja
 {
+    cout << "in fs update-----------------------------------------------------------------\n";
     double q_p;
     for (int i = 0; i <= CALCULATION_LIMIT; ++i)
         fs_info[i].get_profit = -numeric_limits<double>::infinity();
@@ -733,6 +752,8 @@ void fs_update() // te koszty R15+ cos niezbyt dzialaja
     double q_pq[5];
 
     for (int i = 0; i <= CALCULATION_LIMIT; ++i) {
+
+        // enchance chances for 15->pri, pri->duo, duo->tri, tri->tet, tet->pen
         q_pq[0] = min(0.9, .1176 + .01176 * min(50, i) + .01176 / 5.0 * max(i - 50, 0));
         q_pq[1] = min(0.9, .0769 + .00769 * min(82, i) + 0.00769 / 5.0 * max(i - 82, 0));
         q_pq[2] = min(0.9, .0625 + .00625 * min(102, i) + 0.00625 / 5.0 * max(i - 102, 0));
@@ -746,28 +767,59 @@ void fs_update() // te koszty R15+ cos niezbyt dzialaja
         }
         // the not working \
         q = (fs_info[i].get_profit + u_R_value[1] * q_pq[0] - u_CBSA - (1 - q_pq[0]) * u_R) / (1 - q_pq[0]);
-        q = (fs_info[i].get_profit - u_CBSA - (1 - q_pq[0]) * u_R) / (1 - q_pq[0]);
-        if (q > fs_info[i + 2].get_profit) {
-            fs_info[i + 2].get_profit = q;
 
-            fs_info[i + 2].get_comments = "R15";
+        // R15->pri not including enchant
+        q = (fs_info[i].get_profit - u_CBSA - (1 - q_pq[0]) * u_R) / (1 - q_pq[0]);
+        // R15->pri includin enchant \
+        q = (fs_info[i].get_profit - u_CBSA - (1 - q_pq[0]) * u_R - q_pq[0] * u_R_costs[0]) / (1 - q_pq[0]);
+        if (q > fs_info[i + 2].get_profit) {
+            /*
+            if (i < SUMMARY_LIMIT) {
+                cout << "fs cost " << i + 2 << " updated from ";
+                zbicie_kijem(fs_info[i + 2].get_profit);
+                cout << " via " << fs_info[i + 2].get_comments << " to ";
+                zbicie_kijem(q);
+                cout << " via R15>\n";
+            }
+            /**/
+            fs_info[i + 2].get_profit = q;
+            fs_info[i + 2].get_comments = "R15>";
         }
 
-        /*debug R15*/ if (i < SUMMARY_LIMIT) {
+        /*debug R15
+         if (i < SUMMARY_LIMIT) {
             cout << "R15  on " << i << "->" << i + 2 << " is ";
             zbicie_kijem(q);
             cout << "\n";
+            // cout << "(" << fs_info[i].get_profit << " - " << u_CBSA << "- (1 - " << q_pq[0] << ") * " << u_R << "-" << q_pq[0] << "*" << u_R_costs[0] << ") / (1 - " << q_pq[0] << ")\n";
             cout << "(" << fs_info[i].get_profit << " - " << u_CBSA << " - (1 - " << q_pq[0] << ")/(1-" << q_pq[0] << ")\n";
         }
         /**/
 
+        // pri->duo
         q = (fs_info[i].get_profit - u_CBSA - (1 - q_pq[1]) * u_R) / (1 - q_pq[1]);
         if (q > fs_info[i + 3].get_profit) {
+
+            /*
+            if (i < SUMMARY_LIMIT) {
+                cout << "fs cost " << i + 3 << " updated from ";
+                zbicie_kijem(fs_info[i + 3].get_profit);
+                cout << " via " << fs_info[i + 3].get_comments << " to ";
+                zbicie_kijem(q);
+                cout << " via R_PRI>\n";
+            }
+            /**/
+
             fs_info[i + 3].get_profit = q;
-            fs_info[i + 3].get_comments = "R_PRI";
+            fs_info[i + 3].get_comments = "R_PRI>";
         }
-        for (int i = 2; i < 5; ++i) {
+        for (int j = 2; j < 5; ++j) {
             // insert code for TRI,TET and PEN enchanting
+            q = (fs_info[i].get_profit - u_CBSA - (1 - q_pq[j]) * (u_R - u_R_costs[j - 1] + u_R_costs[j - 2])) / (1 - q_pq[j]);
+            if (q > fs_info[i + j + 2].get_profit) {
+                fs_info[i + j + 2].get_profit = q;
+                fs_info[i + j + 2].get_comments = (j == 2) ? "R_DUO>" : ((j == 3) ? "R_TRI>" : "R_TET>");
+            }
         }
     }
 
