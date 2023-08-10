@@ -163,6 +163,8 @@ void mc6990();
 void downcrawl();
 void R14();
 void R20_init();
+void R20_init_2();
+void fs_update_2();
 void fs_update();
 void summary();
 void acc_profits(string s, int b, int e);
@@ -190,18 +192,33 @@ int main()
     // acc heuristic for fs
     downcrawl();
 
-    // value of Reblath Pri->Pen, possibly fs_get_profit update
+    // value of Reblath Pri->Pen, possibly fs_get_profit update\
     R20_init();
 
     summary();
 
     /**/
+    for (int i = 0; i < 2; ++i) {
+        R20_init_2();
+        summary();
+        fs_update_2();
+        summary();
+    }
+    /**/
+
+    /*
     for (int i = 0; i < 5; ++i) // to cos nie dziala
     {
         // update fs prices
         fs_update();
+        cout << "post fs update, pre R20\n";
+        summary();
         // update 15+ costs
         R20_init();
+
+        // summary
+        cout << "post R20\n";
+        summary();
     }
     cout << " after 2137 raounds-------------------------------------------------------------------------------------------------------------------\n";
     summary();
@@ -581,7 +598,9 @@ void summary() // summary on how to get certain fs /.how to earn on them
     for (int i = SUMMARY_LIMIT; i >= 0; --i) {
         cout << "fs = " << i << " profit of ";
         zbicie_kijem(fs_info[i].get_profit + fs_info[i].value);
-        cout << " via " << fs_info[i].get_comments << " and " << fs_info[i].val_comments << "\n";
+        cout << " via " << fs_info[i].get_comments << "(";
+        zbicie_kijem(fs_info[i].get_profit);
+        cout << ") and " << fs_info[i].val_comments << "\n";
     }
     return;
 }
@@ -668,17 +687,32 @@ double mc_RX(int start_fs, int from_lvl)
     }
 }
 
+// this may maybe work slightly not bad
+void R20_init_2()
+{
+    /* assuming + ench does not add value */
+
+    /**/
+}
+
+// this may maybe work slightly not bad
+void fs_update_2()
+{
+}
+
 void R20_init() // uses current data to init pri+ rocaba prices, uses fs value and fs get profit
 {
-    u_R_value[5] = fs_info[70].value;
+    /*
+    u_R_value[4] = fs_info[70].value;
     cout << "ini R20 val = ";
-    zbicie_kijem(u_R_value[5]);
+    zbicie_kijem(u_R_value[4]);
     cout << "\n";
+    /**/
     for (int i = 0; i < 5; ++i)
         u_R_costs[i] = -numeric_limits<double>::infinity();
     double q_p;
 
-    for (int j = 0; j < CALCULATION_LIMIT; ++j) {
+    for (int j = CALCULATION_LIMIT - 10; j >= 0; --j) {
         for (int i = 0; i < 5; ++i) {
             if (i == 0) {
                 q_p = fs_info[j].get_profit - u_BSA * 99.8953 - mc_RX(j, 15) * (u_CBSA + u_R) + u_R;
@@ -707,6 +741,19 @@ void R20_init() // uses current data to init pri+ rocaba prices, uses fs value a
         fs_info[70].get_comments = "from penR";
     }
 
+    for (int i = 0; i < 5; ++i) {
+        u_R_value[i] = -fs_info[DEVOUR_ARMOR[i + 16]].get_profit;
+        cout << "u_R_val[" << i << "] = ";
+        zbicie_kijem(-fs_info[DEVOUR_ARMOR[i + 16]].get_profit);
+        cout << " from ";
+        cout << DEVOUR_ARMOR[i + 16] << "fs\n";
+    }
+
+    for (int i = 0; i < 5; ++i) {
+        cout << "R " << i + 16 << " value is ";
+        zbicie_kijem(u_R_value[i]);
+        cout << "\n";
+    }
     /*
         double q_pq[4];
 
@@ -768,12 +815,13 @@ void fs_update() // te koszty R15+ cos niezbyt dzialaja
         // the not working \
         q = (fs_info[i].get_profit + u_R_value[1] * q_pq[0] - u_CBSA - (1 - q_pq[0]) * u_R) / (1 - q_pq[0]);
 
-        // R15->pri not including enchant
+        // R15->pri not including enchant \
         q = (fs_info[i].get_profit - u_CBSA - (1 - q_pq[0]) * u_R) / (1 - q_pq[0]);
-        // R15->pri includin enchant \
-        q = (fs_info[i].get_profit - u_CBSA - (1 - q_pq[0]) * u_R - q_pq[0] * u_R_costs[0]) / (1 - q_pq[0]);
+
+        // R15->pri includin enchant value
+        q = min(0.0, (fs_info[i].get_profit - u_CBSA - (1 - q_pq[0]) * u_R - q_pq[0] * u_R_value[0]) / (1 - q_pq[0]));
         if (q > fs_info[i + 2].get_profit) {
-            /*
+            /**/
             if (i < SUMMARY_LIMIT) {
                 cout << "fs cost " << i + 2 << " updated from ";
                 zbicie_kijem(fs_info[i + 2].get_profit);
@@ -796,8 +844,11 @@ void fs_update() // te koszty R15+ cos niezbyt dzialaja
         }
         /**/
 
-        // pri->duo
+        // pri->duo no ench val \
         q = (fs_info[i].get_profit - u_CBSA - (1 - q_pq[1]) * u_R) / (1 - q_pq[1]);
+
+        // pri->duo ench val
+        q = min(0.0, (fs_info[i].get_profit - u_CBSA - (1 - q_pq[1]) * u_R - q_pq[1] * u_R_value[1]) / (1 - q_pq[1]));
         if (q > fs_info[i + 3].get_profit) {
 
             /*
@@ -815,7 +866,13 @@ void fs_update() // te koszty R15+ cos niezbyt dzialaja
         }
         for (int j = 2; j < 5; ++j) {
             // insert code for TRI,TET and PEN enchanting
+             // ench no val \
             q = (fs_info[i].get_profit - u_CBSA - (1 - q_pq[j]) * (u_R - u_R_costs[j - 1] + u_R_costs[j - 2])) / (1 - q_pq[j]);
+
+            // ench val
+            // q = (fs_info[i].get_profit - u_CBSA - (1 - q_pq[j]) * (u_R )- q_pq[1] * u_R_value[1]) / (1 - q_pq[1]);
+            q = min(0.0, (fs_info[i].get_profit - u_CBSA + (1 - q_pq[j]) * (u_R_costs[j] - u_R_costs[j - 1]) + q_pq[j] * u_R_value[j + 1]) / (q - q_pq[j]));
+
             if (q > fs_info[i + j + 2].get_profit) {
                 fs_info[i + j + 2].get_profit = q;
                 fs_info[i + j + 2].get_comments = (j == 2) ? "R_DUO>" : ((j == 3) ? "R_TRI>" : "R_TET>");
@@ -825,16 +882,3 @@ void fs_update() // te koszty R15+ cos niezbyt dzialaja
 
     return;
 }
-
-/*
-const double q_p = min(HARDCAP_CHANCE, u_R14_base + min(u_R14_soft, target_fs - 1) * u_R14_per + max(target_fs - 1 - u_R14_soft, 0) * u_R14_post);
-    const double q_fs = fs_info[target_fs - 1].get_profit;
-    const double q_pc = CLEANSE * q_p;
-    const double q_s = -1 * u_BSA;
-    const double q_rp = -1 * (1 - q_p) * u_R / 2;
-    // cout << q_p << ' ' << q_fs << " " << q_pc << " " << q_s << " " << q_rp << "\n";
-    return (q_fs + q_pc + q_s + q_rp) / (1 - q_p);
-
-    return (fs_info[target_fs - 1].get_profit + CLEANSE * q_p - u_BSA - (1 - q_p) * u_R / 2) / (1 - q_p);
-
-/**/
