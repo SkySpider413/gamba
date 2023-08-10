@@ -1,3 +1,4 @@
+#include "modules/mc_RX_f.h"
 #include <bits/stdc++.h>
 #include <windows.h>
 using namespace std;
@@ -606,7 +607,7 @@ void summary() // summary on how to get certain fs /.how to earn on them
 }
 
 // todo line todo line todo line todo line todo line todo line todo line todo line todo line todo line todo line todo line todo line todo line todo line
-
+/*
 double mc_RX(int start_fs, int from_lvl)
 {
     int q_fs;
@@ -686,6 +687,7 @@ double mc_RX(int start_fs, int from_lvl)
         return 0;
     }
 }
+/**/
 
 // this may maybe work slightly not bad
 void R20_init_2()
